@@ -18,4 +18,6 @@ FROM debian:10
 
 COPY --from=builder /go/bin/waiter /usr/local/bin/waiter
 
+USER 1000
+
 ENTRYPOINT ["waiter"]
