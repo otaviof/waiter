@@ -6,7 +6,7 @@ import (
 
 var startCmd = &cobra.Command{
 	Use:          "start",
-	Short:        "Starts the waiter daemon, and holds until `done`.",
+	Short:        "Starts the waiter daemon, and holds until `done` is issued.",
 	SilenceUsage: true,
 	RunE:         start,
 }
@@ -16,6 +16,6 @@ func init() {
 }
 
 func start(cmd *cobra.Command, args []string) error {
-	p := NewWaiter()
-	return p.Wait()
+	w := newWaiter()
+	return w.Wait()
 }

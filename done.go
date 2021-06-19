@@ -17,6 +17,6 @@ func init() {
 }
 
 func done(cmd *cobra.Command, args []string) error {
-	p := NewWaiter()
+	p := newWaiter()
 	return p.Done()
 }
