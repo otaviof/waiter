@@ -2,19 +2,19 @@
 # Build
 #
 
-FROM golang:latest as builder
+FROM golang:alpine as builder
 
 WORKDIR /go/src/app
 COPY . .
 
-RUN apt-get install -y make && \
+RUN apk add --update-cache make && \
     make install
 
 #
 # Run
 #
 
-FROM debian:10
+FROM alpine:latest
 
 COPY --from=builder /go/bin/waiter /usr/local/bin/waiter
 
