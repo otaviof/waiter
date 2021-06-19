@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+// retry re-executes the informed function for the desired amount of times, waiting for the informed
+// duration. It returns a boolean indicating if timeout was reached.
 func retry(attempts int64, sleep time.Duration, fn func() bool) bool {
 	log.Printf("Attempts '%d'...", attempts)
 	shouldRetry := fn()
