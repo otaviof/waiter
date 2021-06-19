@@ -1,26 +1,31 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
+	"time"
 )
 
+// Waiter actor that creates a lock-file and wait for the file to be deleted, or returns error upon
+// timeout (maximum retries).
 type Waiter struct {
-	pidPath string
+	lockFilePath string        // path to the lock-file
+	retries      int64         // amount of times to retry
+	interval     time.Duration // sleep duration between retries
 }
 
-const pidPath = "/var/tmp/waiter.pid"
-
-func (w *Waiter) savePid(pid int) error {
-	f, err := os.Create(w.pidPath)
+// save writes the lock-file with informed PID.
+func (w *Waiter) save(pid int) error {
+	f, err := os.Create(w.lockFilePath)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	log.Printf("Saving PID '%d' at '%s'", pid, w.pidPath)
+	log.Printf("Saving '%d' (PID) on '%s' lock-file", pid, w.lockFilePath)
 	pidStr := strconv.Itoa(pid)
 	if _, err = f.WriteString(pidStr); err != nil {
 		return err
@@ -28,11 +33,12 @@ func (w *Waiter) savePid(pid int) error {
 	return f.Sync()
 }
 
-func (w *Waiter) readPid() (int, error) {
-	if _, err := os.Stat(w.pidPath); err != nil {
+// read reads the lock-file, must contain an integer.
+func (w *Waiter) read() (int, error) {
+	if _, err := os.Stat(w.lockFilePath); err != nil {
 		return -1, err
 	}
-	data, err := ioutil.ReadFile(w.pidPath)
+	data, err := ioutil.ReadFile(w.lockFilePath)
 	if err != nil {
 		return -1, err
 	}
@@ -43,26 +49,42 @@ func (w *Waiter) readPid() (int, error) {
 	return pid, nil
 }
 
+// Wait wait for the lock-file to be removed, or timeout.
 func (w *Waiter) Wait() error {
 	pid := os.Getpid()
-	if err := w.savePid(pid); err != nil {
+	if err := w.save(pid); err != nil {
 		return err
 	}
-	waitForFileDeletion(w.pidPath)
+
+	done := retry(w.retries, w.interval, func() bool {
+		_, err := os.Stat(w.lockFilePath)
+		if err == nil {
+			return true
+		}
+		return !os.IsNotExist(err)
+	})
+	if !done {
+		_ = os.RemoveAll(w.lockFilePath)
+		return fmt.Errorf("retry timeout after %v", time.Duration(w.retries)*w.interval)
+	}
 	return nil
 }
 
+// Done removes the lock-file.
 func (w *Waiter) Done() error {
-	pid, err := w.readPid()
+	pid, err := w.read()
 	if err != nil {
 		return err
 	}
-	log.Printf("Removing pid-file '%s' (%d)", w.pidPath, pid)
-	return os.Remove(w.pidPath)
+	log.Printf("Removing lock-file at '%s' (%d PID)", w.lockFilePath, pid)
+	return os.Remove(w.lockFilePath)
 }
 
-func NewWaiter() *Waiter {
+// NewWaiter instantiate the Waiter.
+func NewWaiter(lockFilePath string, retries int64, interval time.Duration) *Waiter {
 	return &Waiter{
-		pidPath: pidPath,
+		lockFilePath: lockFilePath,
+		retries:      retries,
+		interval:     interval,
 	}
 }
