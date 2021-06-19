@@ -4,7 +4,7 @@ IMAGE ?= otaviof/$(APP)
 IMAGE_TAG ?= $(IMAGE):latest
 
 GO_FLAGS ?= -v -mod=vendor
-GO_TEST_FLAGS ?= -cover
+GO_TEST_FLAGS ?= -cover -race
 
 ARGS ?=
 
@@ -20,9 +20,9 @@ build: $(APP)
 clean:
 	rm -f $(APP) > /dev/null
 
-# .PHONY: test
-# test:
-# 	go test $(GO_FLAGS) $(GO_TEST_FLAGS) .
+.PHONY: test
+test:
+	go test $(GO_FLAGS) $(GO_TEST_FLAGS) .
 
 run:
 	go run $(GO_FLAGS) . $(ARGS)
