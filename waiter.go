@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -16,6 +17,9 @@ type Waiter struct {
 	retries      int64         // amount of times to retry
 	interval     time.Duration // sleep duration between retries
 }
+
+// ErrTimeout when maximum amount of retries is reached.
+var ErrTimeout = errors.New("reached maximum amount of retries")
 
 // save writes the lock-file with informed PID.
 func (w *Waiter) save(pid int) error {
@@ -65,7 +69,7 @@ func (w *Waiter) Wait() error {
 	})
 	if !done {
 		_ = os.RemoveAll(w.lockFilePath)
-		return fmt.Errorf("retry timeout after %v", time.Duration(w.retries)*w.interval)
+		return fmt.Errorf("%w: elapsed %v", ErrTimeout, time.Duration(w.retries)*w.interval)
 	}
 	return nil
 }
