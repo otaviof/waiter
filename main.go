@@ -9,9 +9,17 @@ import (
 )
 
 var rootCmd = &cobra.Command{
+	Short:        "Waits until `done` is issued.",
+	Long:         rootCmdLongDesc,
 	Use:          "waiter [flags]",
 	SilenceUsage: true,
 }
+
+const rootCmdLongDesc = `
+Idle loop to hold a container (or POD) running while some other action happens in the background. It
+is started by issuing "waiter start " and can be stopped with "waiter done", or after timeout. Please
+check "--help" to inspect the flags.
+`
 
 var (
 	// lockFilePath path to lock file
