@@ -60,12 +60,11 @@ func (w *Waiter) Wait() error {
 		return err
 	}
 
+	// will inspect the lock file and only return "false", which stops retry loop, if the lock-file
+	// is not found
 	done := retry(w.retries, w.interval, func() bool {
 		_, err := os.Stat(w.lockFilePath)
-		if err == nil {
-			return true
-		}
-		return !os.IsNotExist(err)
+		return err == nil || !os.IsNotExist(err)
 	})
 	if !done {
 		_ = os.RemoveAll(w.lockFilePath)

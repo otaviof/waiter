@@ -8,14 +8,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// rootCmd primary cobra.Command instance, sub-commands will be attached to it.
-var rootCmd = &cobra.Command{
-	Short:        "Waits until `done` is issued.",
-	Long:         rootCmdLongDesc,
-	Use:          "waiter [flags]",
-	SilenceUsage: true,
-}
-
 const rootCmdLongDesc = `
 Idle loop to hold a container (or maybe a Kubernetes POD) running while some other action happens in
 the background. It is started by issuing "waiter start" and can be stopped with "waiter done", or
@@ -32,6 +24,14 @@ after timeout. Please check "--help" to inspect the flags.
 In the case of timeout, the waiter will return error, it only exists gracefully via "waiter done", or
 the removal of the lock-file before timeout.
 `
+
+// rootCmd primary cobra.Command instance, sub-commands will be attached to it.
+var rootCmd = &cobra.Command{
+	Short:        "Waits until `done` is issued.",
+	Long:         rootCmdLongDesc,
+	Use:          "waiter [flags]",
+	SilenceUsage: true,
+}
 
 var (
 	// lockFilePath path to lock file
